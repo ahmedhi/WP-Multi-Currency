@@ -1,0 +1,42 @@
+# Node / JS build files
+node_modules/
+npm-debug.log*
+yarn.lock
+pnpm-lock.yaml
+package-lock.json
+
+# Composer (si utilisé)
+vendor/
+composer.lock
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE/editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Git metadata
+*.orig
+
+# Logs
+*.log
+
+# WP-specific
+wp-config.php
+.env
+.env.local
+.env.production
+.env.development
+
+# Build artifacts
+*.zip
+*.tar.gz
+*.tar
+
+# Translations (si gérées ailleurs)
+*.mo
+*.po~
