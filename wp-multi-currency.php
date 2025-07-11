@@ -5,6 +5,19 @@
  * Version: 0.9
  */
 
+require_once plugin_dir_path(__FILE__) . 'lib/plugin-update-checker/plugin-update-checker.php';
+
+$myUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
+    'https://github.com/ahmedhi/WP-Multi-Currency/',
+    __FILE__,
+    'wp-multi-currency'
+);
+
+// Optionnel : pour utiliser les tags Git comme version
+$myUpdateChecker->setBranch('main'); // ou 'master' ou une autre branche si tu préfères
+$myUpdateChecker->getVcsApi()->enableReleaseAssets();
+
+
 include_once plugin_dir_path(__FILE__) . 'admin-board.php';
 
 if (!session_id()) {
