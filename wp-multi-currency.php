@@ -90,7 +90,7 @@ add_action('wp_footer', function() {
     if (function_exists('get_user_country_code_fallback')) {
         $info = get_user_country_code_fallback();
         echo '<pre>';
-        print_r($info);
+        //print_r($info);
         echo '</pre>';
     } else {
         echo '⚠️ Fonction get_user_country_code_fallback() non disponible';
