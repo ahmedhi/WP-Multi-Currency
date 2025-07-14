@@ -7,18 +7,28 @@
  * Text Domain: wp-multi-currency
  */
 
-require_once plugin_dir_path(__FILE__) . 'lib/plugin-update-checker/plugin-update-checker.php';
+// Intégration du système de mise à jour depuis GitHub
+$update_checker_path = plugin_dir_path(__FILE__) . 'lib/plugin-update-checker/plugin-update-checker.php';
 
-$myUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
-    'https://github.com/ahmedhi/WP-Multi-Currency/',
-    __FILE__,
-    'wp-multi-currency'
-);
+if (file_exists($update_checker_path)) {
+    require_once $update_checker_path;
 
-// Optionnel : pour utiliser les tags Git comme version
-$myUpdateChecker->setBranch('main'); // ou 'master' ou une autre branche si tu préfères
-$myUpdateChecker->getVcsApi()->enableReleaseAssets();
+    if (class_exists('Puc_v4_Factory')) {
+        $myUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
+            'https://github.com/ahmedhi/WP-Multi-Currency/',
+            __FILE__,
+            'wp-multi-currency'
+        );
 
+        // Optionnel : utilise la branche principale
+        $myUpdateChecker->setBranch('main');
+        $myUpdateChecker->getVcsApi()->enableReleaseAssets();
+    } else {
+        error_log('🔴 Erreur : Classe Puc_v4_Factory non trouvée.');
+    }
+} else {
+    error_log('🔴 Erreur : plugin-update-checker.php introuvable.');
+}
 
 include_once plugin_dir_path(__FILE__) . 'admin-board.php';
 
