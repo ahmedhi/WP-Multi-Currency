@@ -118,13 +118,11 @@ add_action('wp_footer', function() {
     ?>
     <script>
     document.addEventListener('DOMContentLoaded', function () {
-        console.log('Test 1 : ' + document.querySelector('.woocommerce-Price-amount.amount'));
         const yithPrice = document.querySelector('.ywsbs-price .woocommerce-Price-amount.amount');
         if (!yithPrice) {
             console.warn('YITH Price Element not found');
             return;
         }
-        console.log('YITH Price Element:', yithPrice);
         if (yithPrice) {
             const customPrice = <?php echo json_encode(wc_price( get_custom_price_by_country( WC()->cart->get_cart()[array_key_first(WC()->cart->get_cart())]['data'] ?? null ), ['currency' => $currency] )); ?>;
             if (customPrice) {
@@ -189,12 +187,9 @@ add_action('wp_footer', function() {
                     if (el.textContent.includes('/ 3 months')) {
                         const match = el.textContent.match(/([\d,.\s]+)\s*([A-Z€]+)/i);
                         if (match) {
-                            console.log('Found price block:', el.textContent);
                             const amount = parseFloat(match[1].replace(/\s/g, '').replace('.', '').replace(',', '.'));
                             total += amount;
                             currency = match[2];
-                            console.log('Matched amount:', amount, 'Currency:', currency);
-                            console.log('total :', total);
                         }
                     }
                 });
