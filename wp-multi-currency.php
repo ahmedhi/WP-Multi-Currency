@@ -2,10 +2,12 @@
 /**
  * Plugin Name: WordPress Multi-Currency
  * Description: Allow different fixed prices per country for variable products in WooCommerce.
- * Version: 0.9.4
+ * Version: 0.9.5
  * Author: Ahmed Hilali
  * Text Domain: wp-multi-currency
  */
+
+use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
 
 // Intégration du système de mise à jour depuis GitHub
 $update_checker_path = plugin_dir_path(__FILE__) . 'lib/plugin-update-checker/plugin-update-checker.php';
@@ -13,8 +15,8 @@ $update_checker_path = plugin_dir_path(__FILE__) . 'lib/plugin-update-checker/pl
 if (file_exists($update_checker_path)) {
     require_once $update_checker_path;
 
-    if (class_exists('Puc_v4_Factory')) {
-        $myUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
+    if (class_exists('PucFactory')) {
+        $myUpdateChecker = PucFactory::buildUpdateChecker(
             'https://github.com/ahmedhi/WP-Multi-Currency/',
             __FILE__,
             'wp-multi-currency'
