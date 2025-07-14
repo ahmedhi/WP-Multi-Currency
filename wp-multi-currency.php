@@ -2,7 +2,7 @@
 /**
  * Plugin Name: WordPress Multi-Currency
  * Description: Allow different fixed prices per country for variable products in WooCommerce.
- * Version: 0.9.5
+ * Version: 0.9.6
  * Author: Ahmed Hilali
  * Text Domain: wp-multi-currency
  */
@@ -26,7 +26,7 @@ if (file_exists($update_checker_path)) {
         $myUpdateChecker->setBranch('main');
         $myUpdateChecker->getVcsApi()->enableReleaseAssets();
     } else {
-        error_log('🔴 Erreur : Classe Puc_v4_Factory non trouvée.');
+        error_log('🔴 Erreur : Classe PucFactory non trouvée.');
     }
 } else {
     error_log('🔴 Erreur : plugin-update-checker.php introuvable.');
