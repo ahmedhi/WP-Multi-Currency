@@ -2,7 +2,7 @@
 /**
  * Plugin Name: WordPress Multi-Currency
  * Description: Allow different fixed prices per country for variable products in WooCommerce.
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: Ahmed Hilali
  * Text Domain: wp-multi-currency
  */
