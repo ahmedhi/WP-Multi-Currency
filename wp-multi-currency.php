@@ -7,30 +7,6 @@
  * Text Domain: wp-multi-currency
  */
 
-use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
-
-// Intégration du système de mise à jour depuis GitHub
-$update_checker_path = plugin_dir_path(__FILE__) . 'lib/plugin-update-checker/plugin-update-checker.php';
-
-if (file_exists($update_checker_path)) {
-    require_once $update_checker_path;
-
-    if (class_exists('PucFactory')) {
-        $myUpdateChecker = PucFactory::buildUpdateChecker(
-            'https://github.com/ahmedhi/WP-Multi-Currency/',
-            __FILE__,
-            'wp-multi-currency'
-        );
-
-        // Optionnel : utilise la branche principale
-        $myUpdateChecker->setBranch('main');
-        $myUpdateChecker->getVcsApi()->enableReleaseAssets();
-    } else {
-        error_log('🔴 Erreur : Classe PucFactory non trouvée.');
-    }
-} else {
-    error_log('🔴 Erreur : plugin-update-checker.php introuvable.');
-}
 
 include_once plugin_dir_path(__FILE__) . 'admin-board.php';
 
@@ -38,10 +14,18 @@ if (!session_id()) {
     session_start();
 }
 
-add_action('init', function() {
-    //WC()->session->destroy_session();
-    //WC()->cart->empty_cart();
-});
+function get_client_ip() {
+    $ip_keys = ['HTTP_CF_CONNECTING_IP', 'HTTP_X_REAL_IP', 'HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'REMOTE_ADDR'];
+
+    foreach ($ip_keys as $key) {
+        if (!empty($_SERVER[$key])) {
+            $ip_list = explode(',', $_SERVER[$key]);
+            return trim($ip_list[0]);
+        }
+    }
+
+    return '0.0.0.0';
+}
 
 // Enregistrer les paramètres
 add_action('admin_init', function() {
@@ -52,11 +36,16 @@ add_action('admin_init', function() {
 
 
 function get_user_country_code_fallback() {
-    if ( isset($_SESSION['user_country']) ) {
-        return $_SESSION['user_country'];
+    // Liste dynamique des pays livrables depuis WooCommerce
+    $allowed_countries = array_keys(WC()->countries->get_shipping_countries());
+    
+    if (isset($_SESSION['user_country'])) {
+        return in_array($_SESSION['user_country'], $allowed_countries) ? $_SESSION['user_country'] : 'AE';
     }
 
-    $response = wp_remote_get('http://ip-api.com/json/');
+    $ip = get_client_ip();
+    $response = wp_remote_get('http://ip-api.com/json/' . $ip);
+
     if (is_wp_error($response)) {
         return 'AE';
     }
@@ -65,8 +54,9 @@ function get_user_country_code_fallback() {
     $data = json_decode($body, true);
 
     if (isset($data['countryCode'])) {
-        $_SESSION['user_country'] = $data['countryCode'];
-        return $data['countryCode'];
+        $country = $data['countryCode'];
+        $_SESSION['user_country'] = $country;
+        return in_array($country, $allowed_countries) ? $country : 'AE';
     }
 
     return 'AE';
@@ -88,23 +78,24 @@ add_filter('woocommerce_currency_symbol', function($currency_symbol, $currency) 
 add_action('wp_footer', function() {
 
     if (function_exists('get_user_country_code_fallback')) {
-        $info = get_user_country_code_fallback();
-        echo '<pre>';
-        //print_r($info);
-        echo '</pre>';
+        $country = get_user_country_code_fallback();
     } else {
         echo '⚠️ Fonction get_user_country_code_fallback() non disponible';
     }
 
-    $country = get_user_country_code_fallback();
+    echo 'Footer Country : ' . $country;
 
     ?>
     <script>
     document.addEventListener('DOMContentLoaded', function () {
         const userCountry = <?= json_encode($country) ?>;
         document.querySelectorAll('[class*="geo-only-"]').forEach(el => {
-            const match = el.className.match(/geo-only-([A-Z]{2})/);
-            if (match && match[1] !== userCountry) {
+            const classes = el.className.split(/\s+/);
+            const geoClasses = classes.filter(cls => cls.startsWith('geo-only-'));
+            const allowedCountries = geoClasses.map(cls => cls.replace('geo-only-', ''));
+    
+            // Si le pays de l'utilisateur n'est pas dans la liste des pays autorisés → on masque
+            if (!allowedCountries.includes(userCountry)) {
                 el.style.display = 'none';
             }
         });
@@ -167,8 +158,45 @@ add_action('wp_footer', function() {
     $symbol = $assignments[$country]['symbol'] ?? '';
 
 
+    $group_gcc = ['AE', 'QA', 'SA'];
     ?>
     <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const userCountry = '<?= esc_js($country) ?>';
+            const groupGCC = <?= json_encode($group_gcc) ?>;
+            const allowedCountries = groupGCC.includes(userCountry) ? groupGCC : [userCountry];
+        
+            const observer = new MutationObserver(() => {
+                const select = document.querySelector('select[autocomplete="country"]');
+                if (!select) return;
+        
+                // Stop observing après première apparition
+                observer.disconnect();
+        
+                console.log('User country : ' + userCountry);
+                console.log('Allowed countries : ' + allowedCountries);
+                // Supprimer toutes les options sauf celles autorisées
+                Array.from(select.options).forEach(option => {
+                    console.log('4 . ' + option.value );
+                    if (!allowedCountries.includes(option.value)) {
+                        console.log('Remove option !');
+                        option.remove();
+                    }
+                });
+                console.log('5');
+        
+                // Sélectionner automatiquement le bon pays
+                if (allowedCountries.includes(userCountry)) {
+                    select.value = userCountry;
+                    select.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+                console.log('6');
+            });
+        
+           observer.observe(document.body, { childList: true, subtree: true });
+        });
+
+        
         (function() {
             let observer;
             const userCurrency = <?= json_encode($currency) ?>;
@@ -271,7 +299,14 @@ add_action('wp_footer', function() {
     </script>
 
     <?php
+});
 
+
+add_action('init', function() {
+    $country = get_user_country_code_fallback();
+    
+    //WC()->customer->set_country($country);
+    //WC()->customer->set_shipping_country($country);
 });
 
 // 1. Ajouter des champs personnalisés à chaque variation
@@ -357,15 +392,3 @@ add_filter('woocommerce_currency', function($currency) {
     $assignments = get_option('multi_currency_countries', []);
     return $assignments[$country]['currency'] ?? get_option('woocommerce_currency');
 });
-
-// 7. Subscriptions : forcer le bon prix lors de la création de la souscription
-add_filter('woocommerce_subscriptions_product_price', function($price, $product) {
-    if ($product->is_type('variation')) {
-        $custom_price = get_custom_price_by_country($product);
-        if ($custom_price !== '') return $custom_price;
-    }
-    return $price;
-}, 10, 2);
-
-// 8. Subscriptions : prix du panier/checkout (correction visuelle)
-
