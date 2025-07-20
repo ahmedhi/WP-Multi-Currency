@@ -2,7 +2,7 @@
 /**
  * Plugin Name: WordPress Multi-Currency
  * Description: Allow different fixed prices per country for variable products in WooCommerce.
- * Version: 1.0.1
+ * Version: 1.0.3
  * Author: Ahmed Hilali
  * Text Domain: wp-multi-currency
  */
@@ -39,7 +39,11 @@ function get_user_country_code_fallback() {
     // Liste dynamique des pays livrables depuis WooCommerce
     $allowed_countries = array_keys(WC()->countries->get_shipping_countries());
     
-    if (isset($_SESSION['user_country'])) {
+    if (
+        isset($_SESSION['user_country']) &&
+        isset($_SESSION['user_country_timestamp']) &&
+        (time() - $_SESSION['user_country_timestamp']) < 3600 // 1h
+    ) {
         return in_array($_SESSION['user_country'], $allowed_countries) ? $_SESSION['user_country'] : 'AE';
     }
 
@@ -56,6 +60,7 @@ function get_user_country_code_fallback() {
     if (isset($data['countryCode'])) {
         $country = $data['countryCode'];
         $_SESSION['user_country'] = $country;
+        $_SESSION['user_country_timestamp'] = time();
         return in_array($country, $allowed_countries) ? $country : 'AE';
     }
 
