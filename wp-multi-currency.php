@@ -2,7 +2,7 @@
 /**
  * Plugin Name: WordPress Multi-Currency
  * Description: Allow different fixed prices per country for variable products in WooCommerce.
- * Version: 1.0.3
+ * Version: 1.0.5
  * Author: Ahmed Hilali
  * Text Domain: wp-multi-currency
  */
@@ -119,7 +119,7 @@ add_action('wp_footer', function() {
             console.warn('YITH Price Element not found');
             return;
         }
-        if (yithPrice) {
+        else {
             const customPrice = <?php echo json_encode(wc_price( get_custom_price_by_country( WC()->cart->get_cart()[array_key_first(WC()->cart->get_cart())]['data'] ?? null ), ['currency' => $currency] )); ?>;
             if (customPrice) {
                 yithPrice.innerHTML = customPrice.replace(/<[^>]*>/g, ''); // nettoyage HTML éventuel
@@ -157,7 +157,6 @@ add_action('wp_footer', function() {
 
     if (!$variation_price) return; // Pas de prix personnalisé, ne rien faire
 
-    $country = get_user_country_code_fallback();
     $assignments = get_option('multi_currency_countries', []);
     $currency = $assignments[$country]['currency'] ?? get_option('woocommerce_currency');
     $symbol = $assignments[$country]['symbol'] ?? '';
@@ -173,28 +172,34 @@ add_action('wp_footer', function() {
         
             const observer = new MutationObserver(() => {
                 const select = document.querySelector('select[autocomplete="country"]');
-                if (!select) return;
-        
-                // Stop observing après première apparition
-                observer.disconnect();
-        
-                console.log('User country : ' + userCountry);
-                console.log('Allowed countries : ' + allowedCountries);
-                // Supprimer toutes les options sauf celles autorisées
-                Array.from(select.options).forEach(option => {
-                    console.log('4 . ' + option.value );
-                    if (!allowedCountries.includes(option.value)) {
-                        console.log('Remove option !');
-                        option.remove();
+                if (select) {
+                    console.log('Select found');
+                    // Stop observing après première apparition
+                    observer.disconnect();
+            
+                    console.log('User country : ' + userCountry);
+                    console.log('Allowed countries : ' + allowedCountries);
+                    // Supprimer toutes les options sauf celles autorisées
+                    Array.from(select.options).forEach(option => {
+                        console.log('4 . ' + option.value );
+                        if (!allowedCountries.includes(option.value)) {
+                            console.log('Remove option !');
+                            option.remove();
+                        }
+                    });
+                    console.log('5');
+            
+                    // Sélectionner automatiquement le bon pays
+                    if (allowedCountries.includes(userCountry)) {
+                        select.value = userCountry;
+                        select.dispatchEvent(new Event('change', { bubbles: true }));
                     }
-                });
-                console.log('5');
-        
-                // Sélectionner automatiquement le bon pays
-                if (allowedCountries.includes(userCountry)) {
-                    select.value = userCountry;
-                    select.dispatchEvent(new Event('change', { bubbles: true }));
                 }
+                else {
+                    console.log('No country select found');
+                }
+        
+                
                 console.log('6');
             });
         
